@@ -7,6 +7,13 @@ import java.util.*;
 public class Stegonography {
 
     public static void main(String[] args) {
+
+      encrypt();
+      //decrypt();
+
+    }
+
+    public static void decrypt() {
       BufferedImage img = null;
       File f = null;
 
@@ -18,49 +25,49 @@ public class Stegonography {
         System.out.println(e);
       }
 
-      // //get image width and height
-      // int width = img.getWidth();
-      // int height = img.getHeight();
-      // String message = "Test Message";
-      // int msgLen = (message.length() * 8);
-      //
-      // int length = 300;
-      // String lengthInBits = String.format("%32s", Integer.toBinaryString(length)).replace(' ', '0');
-      //
-
-        //System.out.println(lengthInBits);
-        getLength(img);
-    //   for(int i = 0; i < 8; i++) {
-    //     int pixel = img.getRGB(i,0);
-    //     img.setRGB(i,0, editPixel(pixel,lengthInBits.substring(4*i, 4*(i + 1))));
-    //
-    //   }
-    //
-    // //  int length = 0;
-    //
-    //   for(int j = 1; j < height && length > 0; j++) {
-    //     for(int k = 0; k < width && length > 0; k++) {
-    //
-    //     }
-    //   }
-    //
-    //   try{
-    //     f = new File("Output.jpg");
-    //     ImageIO.write(img, "jpg", f);
-    //   }catch(IOException e){
-    //     System.out.println(e);
-    //   }
-
-
-
-
-
+      getLength(img);
     }
 
-    public static void readWritePixel(int x, int y, int pixel, char curr) {
+    public static void encrypt() {
+      BufferedImage img = null;
+      File f = null;
 
-      //img.setRGB()
+      //read image
+      try{
+        f = new File("Sample.jpg");
+        img = ImageIO.read(f);
+      }catch(IOException e){
+        System.out.println(e);
+      }
 
+      //get image width and height
+      int width = img.getWidth();
+      int height = img.getHeight();
+      String message = "Test Message";
+      int msgLen = (message.length() * 8);
+
+      int length = 300;
+      String lengthInBits = String.format("%32s", Integer.toBinaryString(length)).replace(' ', '0');
+
+      System.out.println(lengthInBits);
+
+      for(int i = 0; i < 8; i++) {
+        int pixel = img.getRGB(i,0);
+        //System.out.println(String.format("%32s", Integer.toBinaryString(pixel)).replace(' ', '0'));
+        img.setRGB(i,0, editPixel(pixel,lengthInBits.substring(4*i, 4*(i + 1))));
+
+        //pixel = img.getRGB(i,0);
+        //System.out.println(String.format("%32s", Integer.toBinaryString(pixel)).replace(' ', '0'));
+
+      }
+
+
+      try{
+        f = new File("Output.jpg");
+        ImageIO.write(img, "jpg", f);
+      }catch(IOException e){
+        System.out.println(e);
+      }
     }
 
     public static int editPixel(int pixel, String bits) {
@@ -69,12 +76,21 @@ public class Stegonography {
       int g = (pixel >> 8) & 0xFF;
       int b = pixel & 0xFF;
 
-      a = convert(a,bits.charAt(0) );
-      r = convert(r,bits.charAt(1) );
-      g = convert(g,bits.charAt(2) );
-      b = convert(b,bits.charAt(3) );
+      a = (convert(a,bits.charAt(0)) << 24);
+      //printBinary(a);
+      r = (convert(r,bits.charAt(1)) << 16);
+      //printBinary(r);
+      g = (convert(g,bits.charAt(2)) << 8);
+      //printBinary(g);
+      b = convert(b,bits.charAt(3));
+      //printBinary(b);
 
-      return (a<<24) | (r<<16) | (g<<8) | b;
+      int retval = (a | r | g | b);
+
+      //printBinary(retval);
+
+
+      return retval;
     }
 
     public static int convert(int value, char bit) {
@@ -97,25 +113,43 @@ public class Stegonography {
 
       String bits = "";
       for(int i = 0; i < 8; i++) {
-        int pixel =  img.getRGB(i, 0);
-        int a = (pixel >> 24) & 0x01;
-        System.out.println(a);
-        bits += a;
-        int r = (pixel >> 16) & 0x01;
-        System.out.println(r);
-        bits += r;
-        int g = (pixel >> 8) & 0x01;
-        System.out.println(g);
-        bits += g;
-        int b = pixel & 0x01;
-        System.out.println(b);
-        bits += b;
-        //System.out.println(String.format("%32s", Integer.toBinaryString(pixel)).replace(' ', '0'));
+        int pixel = img.getRGB(i, 0);
+        int a = (pixel >> 24);
+        String as = printBinary(a);
+        bits += as.charAt(as.length() - 1);
+
+        int r = (pixel >> 16);
+        String rs = printBinary(r);
+        bits += rs.charAt(rs.length() - 1);
+
+        int g = (pixel >> 8);
+        String gs = printBinary(g);
+        bits += gs.charAt(gs.length() - 1);
+
+        int b = pixel;
+        String bs = printBinary(b);
+        bits += bs.charAt(bs.length() - 1);
       }
 
-      //System.out.println(bits);
+      System.out.println(integerfrmbinary(bits));
 
     }
+
+
+    public static String printBinary(int value) {
+      return  String.format("%8s", Integer.toBinaryString(value)).replace(' ', '0');
+    }
+
+    public static int integerfrmbinary(String str){
+    double j=0;
+    for(int i=0;i<str.length();i++){
+        if(str.charAt(i)== '1'){
+         j=j+ Math.pow(2,str.length()-1-i);
+     }
+
+    }
+    return (int) j;
+}
 
 
 

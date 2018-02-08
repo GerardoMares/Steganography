@@ -7,8 +7,8 @@ public class Stegonography {
 
     public static void main(String[] args) {
 
-        encrypt();
-        //decrypt();
+        //encrypt();
+        decrypt();
 
     }
 
@@ -24,7 +24,10 @@ public class Stegonography {
             System.out.println(e);
         }
 
-        System.out.println(getLength(img));
+        int length = getLength(img);
+        String binary = getMessage(img, length);
+
+        System.out.println(convertBinaryToString(binary));
     }
 
     private static void encrypt() {
@@ -39,12 +42,11 @@ public class Stegonography {
             System.out.println(e);
         }
 
-        int length = 300;
-        String lengthInBits = String.format("%32s", Integer.toBinaryString(length)).replace(' ', '0');
-        writeMessageLength(img, lengthInBits);
-
-        //get image width and height
         String message = "Test Message";
+        String lengthInBits = String.format("%32s", Integer.toBinaryString(message.length() * 8)).replace(' ', '0');
+
+
+        writeMessageLength(img, lengthInBits);
         writeMessage(img, message);
 
 
@@ -70,8 +72,8 @@ public class Stegonography {
         System.out.println(messageBits);
         int k = 0;
 
-        for (int i = 1; i < width ; i++) {
-            for (int j = 0; j < height; j++) {
+        for (int i = 1; i < height && k < messageBits.length() / 4 ; i++) {
+            for (int j = 0; j < width  && k < messageBits.length() / 4 ; j++) {
                 int pixel = img.getRGB(i,j);
                 img.setRGB(i,j,editPixel(pixel, messageBits.substring(4*k, 4*(k + 1))));
                 k++;
@@ -87,8 +89,14 @@ public class Stegonography {
 
         for(char c:cArray)
         {
-            String cBinaryString=Integer.toBinaryString((int)c);
-            sb.append(cBinaryString);
+            String cBinaryString = Integer.toBinaryString((int)c);
+            int zeros = 8 - cBinaryString.length();
+            StringBuilder leading = new StringBuilder();
+            for(int i = 0; i < zeros; i++) {
+                leading.append('0');
+            }
+            String current = leading.toString() + cBinaryString;
+            sb.append(current);
         }
 
         return sb.toString();
@@ -141,7 +149,52 @@ public class Stegonography {
             bits.append(bs.charAt(bs.length() - 1));
         }
 
+        System.out.println(bits.toString());
         return integerFromBinaryString(bits.toString());
+    }
+
+    private static String getMessage(BufferedImage img, int length) {
+        StringBuilder sb = new StringBuilder();
+        int k = 0;
+        int max = length / 4;
+        for(int i = 1; i < img.getHeight() && k < max; i++) {
+            for(int j = 0; j < img.getWidth() && k < max; j++) {
+                int pixel = img.getRGB(i, j);
+
+                int a = (pixel >> 24);
+                String as = printBinary(a);
+                sb.append(as.charAt(as.length() - 1));
+
+                int r = (pixel >> 16);
+                String rs = printBinary(r);
+                sb.append(rs.charAt(rs.length() - 1));
+
+                int g = (pixel >> 8);
+                String gs = printBinary(g);
+                sb.append(gs.charAt(gs.length() - 1));
+
+                int b = pixel;
+                String bs = printBinary(b);
+                sb.append(bs.charAt(bs.length() - 1));
+                k++;
+            }
+        }
+
+        System.out.println(sb.toString());
+
+        return  sb.toString();
+
+    }
+
+    private static String convertBinaryToString(String binary) {
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < binary.length(); i++) {
+            int charCode = Integer.parseInt(binary.substring(i * 8, 8 *(i + 1)), 2);
+            Character current = (char) charCode;
+            sb.append(current);
+        }
+        return sb.toString();
     }
 
     private static String printBinary(int value) {

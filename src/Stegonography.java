@@ -7,8 +7,8 @@ public class Stegonography {
 
     public static void main(String[] args) {
 
-        //encrypt();
-        decrypt();
+        encrypt();
+        //decrypt();
 
     }
 

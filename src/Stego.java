@@ -1,100 +1,116 @@
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.InputStream;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
+import java.awt.image.DataBufferByte;
+import javax.imageio.ImageIO;
 
-/**
- * Created by gerardomares on 2/9/18.
+/*
+ *Class Steganography
  */
 public class Stego {
 
+
     public static void main(String[] args) {
-        encrypt();
+        BufferedImage image;
+        String message = args[0];
+        String file = args[1];
+        String out = args[2];
+
+        try {
+             image = ImageIO.read(new File(file));
+             encode(image,message);
+             decode(out);
+
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+
+    }
+    private static void encode(BufferedImage image_orig, String message) {
+
+        BufferedImage image = user_space(image_orig);
+        image = add_text(image,message);
+
+        try {
+            ImageIO.write(image,"png",new File("Output.png"));
+        } catch(Exception e) {
+           e.printStackTrace();
+        }
     }
 
-
-
-    public static void encrypt() {
-        BufferedImage original =null;
+    private static void  decode(String file) {
+        byte[] decodedBytes;
         try {
-            original = ImageIO.read(new File("Sample.png"));
-        } catch (Exception e) {
+            BufferedImage image = user_space(ImageIO.read(new File(file)));
+            decodedBytes = getMessage(get_byte_data(image));
+            System.out.println(new String(decodedBytes));
+        } catch(Exception e) {
             e.printStackTrace();
         }
-        byte[] bytes = getBytes(original);
-
-        assert (bytes != null);
-        for (int i = 20; i < bytes.length; i++) {
-            byte aByte = bytes[i];
-            String current = Integer.toBinaryString(aByte & 0xFF);
-            System.out.println(current);
-            //current = current.substring(0,current.length()-1) + 0;
-            //byte newByte = Byte.parseByte(current, 2);
-            byte newByte = (byte) (aByte | 0x1);
-
-            bytes[i] = newByte;
-        }
-
-//        try {
-//            InputStream in = new ByteArrayInputStream(bytes);
-//            BufferedImage bImageFromConvert = ImageIO.read(in);
-//            ImageIO.write(bImageFromConvert, "PNG", new File("Output.png"));
-//        } catch (Exception e ) {
-//            e.printStackTrace();
-//        }
     }
 
-    static byte[] getBytes(BufferedImage img) {
-        return ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
-    }
-
-
-    public static void enc() {
+    private static BufferedImage add_text(BufferedImage image, String text) {
+        byte img[]  = get_byte_data(image);
+        byte msg[] = text.getBytes();
+        byte len[]  = bit_conversion(msg.length);
         try {
-            BufferedImage inputImage = ImageIO.read(new File("Sample.png"));
+            encode_text(img, len,  0);
+            encode_text(img, msg, 32);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return image;
+    }
 
-            BufferedImage outputImage = new BufferedImage( inputImage.getWidth(), inputImage.getHeight(),  inputImage.getType());
+    private  static BufferedImage user_space(BufferedImage image) {
+        //create new_img with the attributes of image
+        BufferedImage new_img  = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D	graphics = new_img.createGraphics();
+        graphics.drawRenderedImage(image, null);
+        graphics.dispose(); //release all allocated memory for this image
+        return new_img;
+    }
 
-            String length = "00000000000000000000000000000011";
-            int k = 0;
-            for (int x = 0; x < inputImage.getWidth(); x++) {
-                for (int y = 0; y < inputImage.getHeight(); y++) {
-                    int rgb = inputImage.getRGB(x, y);
+    private static byte[] get_byte_data(BufferedImage image) {
+        WritableRaster raster   = image.getRaster();
+        DataBufferByte buffer = (DataBufferByte)raster.getDataBuffer();
+        return buffer.getData();
+    }
 
-                    int red = 0x0000ff & (rgb >> 16);
-                    int green = 0x0000ff & (rgb >> 8);
-                    int blue = 0x0000ff & rgb;
-                    int res;
-                    if(k < 32)  {
-//                        char curr = length.charAt(k);
-//
-//                        if(curr == '1') {
-//                            blue = blue | 0x1;
-//                        } else {
-//                            blue = blue & 0xFE;
-//                        }
-                        //String bits = Integer.toBinaryString(blue);
-                        res = blue | (green << 8) | (red << 16);
-                        System.out.println(Integer.toUnsignedString(res,2));
-//                        System.out.print(bits.charAt(bits.length()-1));
-                        k++;
-                    }
+    private static byte[] bit_conversion(int i) {
+        byte byte0 = (byte)((i & 0x000000FF));
+        return(new byte[]{0,0,0,byte0});
+    }
 
-                    res = blue | (green << 8) | (red << 16);
-
-
-                    outputImage.setRGB(x, y, res);
-                }
+    //TODO: CHANGE THIS
+    private static byte[] encode_text(byte[] image, byte[] addition, int offset) {
+        for (byte add : addition) {
+            for (int bit = 7; bit >= 0; --bit, ++offset) {
+                int b = (add >>> bit) & 1;
+                image[offset] = (byte) ((image[offset] & 0xFE) | b);
             }
-            ImageIO.write(outputImage, "png", new File("Output.png"));
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
+        return image;
     }
 
+    private static int getLength(byte[] image) {
+        int length = 0;
+        for(int i=0; i<32; ++i) {
+            length = (length << 1) | (image[i] & 1);
+        }
+        return length;
+    }
 
+    private  static byte[] getMessage(byte[] image) {
+        int offset  = 32;
+        byte[] result = new byte[getLength(image)];
+
+        for(int b=0; b<result.length; ++b ) {
+            for(int i=0; i<8; ++i, ++offset) {
+                result[b] = (byte)((result[b] << 1) | (image[offset] & 1));
+            }
+        }
+        return result;
+    }
 }

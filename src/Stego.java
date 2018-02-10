@@ -28,10 +28,8 @@ public class Stego {
 
     }
     private static void encode(BufferedImage image_orig, String message) {
-
         BufferedImage image = user_space(image_orig);
         image = add_text(image,message);
-
         try {
             ImageIO.write(image,"png",new File("Output.png"));
         } catch(Exception e) {
@@ -55,8 +53,8 @@ public class Stego {
         byte msg[] = text.getBytes();
         byte len[]  = bit_conversion(msg.length);
         try {
-            encode_text(img, len,  0);
-            encode_text(img, msg, 32);
+            hideMessage(img, len,  0);
+            hideMessage(img, msg, 32);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -64,11 +62,10 @@ public class Stego {
     }
 
     private  static BufferedImage user_space(BufferedImage image) {
-        //create new_img with the attributes of image
         BufferedImage new_img  = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D	graphics = new_img.createGraphics();
         graphics.drawRenderedImage(image, null);
-        graphics.dispose(); //release all allocated memory for this image
+        graphics.dispose();
         return new_img;
     }
 
@@ -83,20 +80,18 @@ public class Stego {
         return(new byte[]{0,0,0,byte0});
     }
 
-    //TODO: CHANGE THIS
-    private static byte[] encode_text(byte[] image, byte[] addition, int offset) {
-        for (byte add : addition) {
+    private static void hideMessage(byte[] image, byte[] message, int offset) {
+        for (byte messageByte : message) {
             for (int bit = 7; bit >= 0; --bit, ++offset) {
-                int b = (add >>> bit) & 1;
+                int b = (messageByte >>> bit) & 1;
                 image[offset] = (byte) ((image[offset] & 0xFE) | b);
             }
         }
-        return image;
     }
 
     private static int getLength(byte[] image) {
         int length = 0;
-        for(int i=0; i<32; ++i) {
+        for(int i=0; i< 32; ++i) {
             length = (length << 1) | (image[i] & 1);
         }
         return length;

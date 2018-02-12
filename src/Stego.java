@@ -3,6 +3,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.awt.image.DataBufferByte;
+import java.util.Scanner;
 import javax.imageio.ImageIO;
 
 /*
@@ -13,15 +14,27 @@ public class Stego {
 
     public static void main(String[] args) {
         BufferedImage image;
-        String message = args[0];
-        String file = args[1];
-        String out = args[2];
+        String message;
+        String file;
+        Scanner keyboard = new Scanner(System.in);
 
         try {
-             image = ImageIO.read(new File(file));
-             encode(image,message);
-             decode(out);
+            System.out.print("What would you like to do? \n(1) Encrypt , (2) Decrypt: ");
 
+            String input = keyboard.nextLine();
+            if("1".equals(input)) {
+                System.out.print("Enter your message: ");
+                message = keyboard.nextLine();
+                System.out.print("Enter image path: ");
+                file = keyboard.nextLine();
+                image = ImageIO.read(new File(file));
+                encode(image,message);
+                System.out.println("Done hiding message in " + file + " and written to Output.png");
+            } else if ("2".equals(input)) {
+                decode();
+            } else {
+                System.out.println("Invalid command");
+            }
         } catch(Exception ex) {
             ex.printStackTrace();
         }
@@ -37,11 +50,11 @@ public class Stego {
         }
     }
 
-    private static void  decode(String file) {
+    private static void  decode() {
         byte[] decodedBytes;
         try {
-            BufferedImage image = user_space(ImageIO.read(new File(file)));
-            decodedBytes = getMessage(get_byte_data(image));
+            BufferedImage image = user_space(ImageIO.read(new File("Output.png")));
+            decodedBytes = getMessage(getImageBytes(image));
             System.out.println(new String(decodedBytes));
         } catch(Exception e) {
             e.printStackTrace();
@@ -49,19 +62,19 @@ public class Stego {
     }
 
     private static BufferedImage add_text(BufferedImage image, String text) {
-        byte img[]  = get_byte_data(image);
+        byte img[]  = getImageBytes(image);
         byte msg[] = text.getBytes();
-        byte len[]  = bit_conversion(msg.length);
+        byte len[]  = {0,0,0,(byte)(msg.length & 0x000000FF)};
         try {
-            hideMessage(img, len,  0);
-            hideMessage(img, msg, 32);
+            hideLength(img, len);
+            hideMessage(img, msg);
         } catch(Exception e) {
             e.printStackTrace();
         }
         return image;
     }
 
-    private  static BufferedImage user_space(BufferedImage image) {
+    private static BufferedImage user_space(BufferedImage image) {
         BufferedImage new_img  = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D	graphics = new_img.createGraphics();
         graphics.drawRenderedImage(image, null);
@@ -69,18 +82,23 @@ public class Stego {
         return new_img;
     }
 
-    private static byte[] get_byte_data(BufferedImage image) {
-        WritableRaster raster   = image.getRaster();
-        DataBufferByte buffer = (DataBufferByte)raster.getDataBuffer();
+    private static byte[] getImageBytes(BufferedImage image) {
+        DataBufferByte buffer = (DataBufferByte)image.getRaster().getDataBuffer();
         return buffer.getData();
     }
 
-    private static byte[] bit_conversion(int i) {
-        byte byte0 = (byte)((i & 0x000000FF));
-        return(new byte[]{0,0,0,byte0});
+    private static void hideLength(byte[] image, byte[] length) {
+        int pos = 0;
+        for (byte lengthByte : length) {
+            for (int bit = 7; bit >= 0; --bit, ++pos) {
+                int b = (lengthByte >>> bit) & 1;
+                image[pos] = (byte) ((image[pos] & 0xFE) | b);
+            }
+        }
     }
 
-    private static void hideMessage(byte[] image, byte[] message, int offset) {
+    private static void hideMessage(byte[] image, byte[] message) {
+        int offset = 32;
         for (byte messageByte : message) {
             for (int bit = 7; bit >= 0; --bit, ++offset) {
                 int b = (messageByte >>> bit) & 1;
@@ -97,7 +115,7 @@ public class Stego {
         return length;
     }
 
-    private  static byte[] getMessage(byte[] image) {
+    private static byte[] getMessage(byte[] image) {
         int offset  = 32;
         byte[] result = new byte[getLength(image)];
 

@@ -1,14 +1,11 @@
 import java.io.File;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
 import java.awt.image.DataBufferByte;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 
-/*
- *Class Steganography
- */
+
 public class Stego {
 
 
@@ -41,8 +38,8 @@ public class Stego {
 
     }
     private static void encode(BufferedImage image_orig, String message) {
-        BufferedImage image = user_space(image_orig);
-        image = add_text(image,message);
+        BufferedImage image = makeImageReadyForEdits(image_orig);
+        image = startAddingText(image,message);
         try {
             ImageIO.write(image,"png",new File("Output.png"));
         } catch(Exception e) {
@@ -53,7 +50,7 @@ public class Stego {
     private static void  decode() {
         byte[] decodedBytes;
         try {
-            BufferedImage image = user_space(ImageIO.read(new File("Output.png")));
+            BufferedImage image = makeImageReadyForEdits(ImageIO.read(new File("Output.png")));
             decodedBytes = getMessage(getImageBytes(image));
             System.out.println(new String(decodedBytes));
         } catch(Exception e) {
@@ -61,7 +58,7 @@ public class Stego {
         }
     }
 
-    private static BufferedImage add_text(BufferedImage image, String text) {
+    private static BufferedImage startAddingText(BufferedImage image, String text) {
         byte img[]  = getImageBytes(image);
         byte msg[] = text.getBytes();
         byte len[]  = {0,0,0,(byte)(msg.length & 0x000000FF)};
@@ -74,7 +71,7 @@ public class Stego {
         return image;
     }
 
-    private static BufferedImage user_space(BufferedImage image) {
+    private static BufferedImage makeImageReadyForEdits(BufferedImage image) {
         BufferedImage new_img  = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D	graphics = new_img.createGraphics();
         graphics.drawRenderedImage(image, null);

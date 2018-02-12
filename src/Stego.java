@@ -5,6 +5,36 @@ import java.awt.image.DataBufferByte;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
 
+/*
+A basic Steganography program that will hide a message inside of an image.
+
+Program rquires hiding messages in PNG files only.
+
+##############################################################################################
+compile with "javac Stego.java"
+
+run with "java Stego"
+
+##############################################################################################
+The program will ask for an option to encrypt ord decrypt a message in a PNG file.
+
+##############################################################################################
+if chose Encrypt:
+
+you will be asked to provide your secret message and a path to the PNG file you want to
+use to hide your message then saves the new image with hidden message as Output.png
+
+##############################################################################################
+if choose Decrypt:
+
+the program will look for a file named Output.png and get the message hidden in the picture.
+
+assumes encrypt was run and there exists an image named Output.png with a message hidden there.
+
+##############################################################################################
+
+ */
+
 
 public class Stego {
 

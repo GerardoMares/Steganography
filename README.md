@@ -26,10 +26,10 @@ java Stego
 
 ##### Encrypt:
 
-> you will be asked to provide your secret message and a path to the PNG file you want to use to hide your message then saves the new image with hidden message as Output.png
+> You will be asked to provide your secret message and a path to the PNG file you want to use to hide your message then saves the new image with hidden message as Output.png
 
 
 ##### Decrypt:
 
-> the program will look for a file named Output.png and get the message hidden in the picture.
+> The program will look for a file named Output.png and get the message hidden in the picture.
 > assumes encrypt was run and there exists an image named Output.png with a message hidden there.

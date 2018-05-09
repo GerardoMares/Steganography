@@ -1,8 +1,5 @@
 # Computer Security Stegonography Assignment
 
----
-
-
 #### A basic Steganography program that will hide a message inside of an image.
 
 > _Only PNG files are supported as of now._

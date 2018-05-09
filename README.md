@@ -2,7 +2,7 @@
 
 #### A basic Steganography program that will hide a message inside of an image.
 
-> _Only PNG files are supported as of now._
+> _PNG and JPEG files are supported as of now._
 
 
 compile:
